@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f8fc"><meta name="description" content="Compare delivery routes and estimated fuel cost."><link rel="manifest" href="/manifest.webmanifest"><title>RouteWise — Smarter delivery routes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="safety-position.css">
+</head>
+<body>
+  <aside id="run-notice" class="run-notice hidden" role="status"><strong>Open RouteWise through the Java server</strong><span>Directly opening this file blocks live search and map requests.</span><a href="http://localhost:8080/">Open the working app →</a></aside>
+  <section id="login-screen" class="login-screen"><form id="login-form" class="login-card"><a class="brand login-brand" href="#"><span class="brand-icon">↗</span><span>route<span class="brand-accent">wise</span></span></a><div class="login-eyebrow">HYDERABAD DELIVERY ROUTES</div><h1 id="auth-title">Your next route<br><span>starts here.</span></h1><p id="auth-description">Sign in to plan smarter trips around Hyderabad.</p><div class="auth-switch" role="group" aria-label="Choose account action"><button id="auth-login-tab" class="auth-tab active" type="button" aria-pressed="true">Log in</button><button id="auth-signup-tab" class="auth-tab" type="button" aria-pressed="false">Sign up</button></div><div id="auth-name-field" class="auth-field hidden"><label for="login-name">Your name</label><input id="login-name" type="text" placeholder="e.g. Rahul" autocomplete="name"></div><label for="login-email">Email</label><input id="login-email" type="email" placeholder="you@example.com" required autocomplete="email"><label for="login-password">Password</label><input id="login-password" type="password" placeholder="Enter your password" required minlength="8" autocomplete="current-password"><button class="primary-btn login-submit" type="submit"><span id="auth-submit-label">Log in</span><span>↗</span></button><small id="auth-footnote">Use your email and password to log in.</small></form><div class="login-art"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-pin">↗</span><div class="art-copy"><span>ONE CITY. BETTER ROUTES.</span><h2>Take the scenic route.<br>Arrive the smart way.</h2><p>Compare road distance, estimated time, and bike fuel costs across Hyderabad.</p></div></div></section>
+  <div id="route-app" class="hidden">
+  <header class="topbar"><a class="brand" href="#"><span class="brand-icon">↗</span><span>route<span class="brand-accent">wise</span></span></a><div class="top-meta"><span class="live-dot"></span><span class="top-location">HYDERABAD · OPENSTREETMAP</span><span class="top-divider"></span><button id="admin-dashboard-btn" class="admin-dashboard-btn" type="button">Admin dashboard</button><span id="user-avatar" class="avatar">R</span><button id="logout-btn" class="logout-btn">Sign out</button></div></header>
+  <main class="app-shell">
+    <section class="intro"><div class="eyebrow"><span class="spark">✳</span> SMARTER DELIVERY PLANNING</div><h1>Every delivery,<br><span>the better way.</span></h1><p>Compare road routes, travel time and estimated bike fuel cost — all in one place.</p></section>
+    <section class="workspace">
+      <aside class="sidebar">
+        <div class="search-card">
+        <div class="card-heading"><div><span class="step-label">YOUR JOURNEY · HYDERABAD</span><h2>Where to?</h2></div><span class="pin-icon">⌖</span></div>
+          <div class="location-field"><span class="origin-dot"></span><div class="field-content"><label for="origin-label">STARTING POINT</label><div class="origin-row"><span id="origin-label">Your current location</span><button id="locate-btn" class="text-btn" title="Use my current location">Use my location</button></div></div></div>
+          <div class="route-connector"><i></i><i></i><i></i></div>
+          <div class="location-field destination-field"><span class="destination-pin">◆</span><div class="field-content"><label for="destination">DESTINATION</label><div class="input-wrap"><input id="destination" type="text" placeholder="Type a place to see Hyderabad suggestions" autocomplete="off"><button id="search-btn" class="search-btn" aria-label="Search destination">→</button></div><div id="suggestions" class="suggestions"></div></div></div>
+          <div class="vehicle-row"><span class="bike-icon">◉</span><div class="bike-fields"><label for="bike-type">YOUR BIKE</label><input id="bike-type" type="text" list="bike-options" placeholder="Type or choose your bike"><datalist id="bike-options"><option>Honda Activa</option><option>Honda Shine</option><option>Hero Splendor</option><option>TVS Jupiter</option><option>TVS Apache</option><option>Bajaj Pulsar</option><option>Royal Enfield Classic</option><option>Suzuki Access</option></datalist></div><button id="settings-btn" class="settings-btn" title="Fuel settings">⚙</button></div>
+          <div id="fuel-settings" class="fuel-settings"><label for="mileage">Your bike's mileage <span><input id="mileage" type="number" min="1" max="200" value="45" required> km / litre</span></label><label for="fuel-price">Petrol price <span><input id="fuel-price" type="number" min="1" value="107"> ₹ / litre</span></label><small>Enter the mileage you get in your usual Hyderabad riding conditions.</small></div>
+          <button id="route-btn" class="primary-btn"><span>Find my routes</span><span>↗</span></button>
+          <p class="privacy-note">◎ Route searches send coordinates to OSRM; place search goes to Photon.</p>
+        </div>
+        <details id="delivery-panel" class="delivery-panel">
+          <summary><span><small>DRIVER WORKFLOW</small><strong>Multi-stop delivery run</strong></span><b>＋</b></summary>
+          <div class="delivery-content">
+            <label for="delivery-vehicle">Vehicle profile</label>
+            <select id="delivery-vehicle" class="delivery-select"><option value="sedan">Sedan</option><option value="box">Box Truck</option><option value="semi">Semi-Trailer</option></select>
+            <div class="profile-dimensions"><label>Width <span><input id="vehicle-width" type="number" min="1" step="0.1"> m</span></label><label>Height <span><input id="vehicle-height" type="number" min="1" step="0.1"> m</span></label><label>Gross weight <span><input id="vehicle-weight" type="number" min="0.5" step="0.5"> t</span></label></div>
+            <p class="access-note">Example dimensions—replace with your vehicle's actual values. Public OSRM lacks reliable bridge-height and road-weight data. Heavy-vehicle scoring is a road-name heuristic; verify legal access before dispatch.</p>
+            <div class="delivery-rule-grid"><label>Rest after driving <span><input id="break-after" type="number" min="4" max="5" step="0.5" value="4.5"> hr</span></label><label>Break duration <span><input id="break-duration" type="number" min="30" max="30" value="30" readonly> min</span></label><label>Shift cap <span><input id="shift-cap" type="number" min="1" max="16" step="0.5" value="8"> hr</span></label><label>Stop service time <span><input id="service-time" type="number" min="0" max="120" value="5"> min</span></label></div>
+            <label for="delivery-stop-input">Add delivery stop</label>
+            <div class="delivery-add-row"><input id="delivery-stop-input" type="text" placeholder="Search Hyderabad place" autocomplete="off"><button id="add-delivery-stop" type="button">Add stop</button><div id="delivery-suggestions" class="delivery-suggestions"></div></div>
+            <label for="delivery-customer">Customer phone for SMS updates and delivery OTP <span class="optional-label">optional</span></label>
+            <input id="delivery-customer" class="delivery-customer" type="tel" placeholder="e.g. +919876543210">
+            <div id="delivery-stop-queue" class="delivery-stop-queue"><span class="queue-empty">No stops added yet.</span></div>
+            <button id="plan-delivery-btn" class="primary-btn delivery-plan-btn" type="button"><span>Plan delivery run</span><span>↗</span></button>
+            <div id="delivery-run-results" class="delivery-run-results hidden">
+              <div id="delivery-run-summary" class="delivery-run-summary"></div>
+              <h3>Assigned stops &amp; rest breaks</h3><div id="delivery-timeline" class="delivery-timeline"></div>
+              <h3>Pending / unassigned</h3><div id="delivery-pending" class="delivery-pending">None</div>
+              <h3>Live customer SMS tracking</h3><div id="delivery-sms-log" class="delivery-sms-log">No SMS sent yet. Configure Twilio to send delivery codes and ETA updates.</div>
+            </div>
+          </div>
+        </details>
+        <div class="results-head"><div><span class="step-label">ROUTE OPTIONS</span><h2 id="results-title">Ready when you are</h2></div><div class="result-controls"><select id="sort-routes" aria-label="Sort routes"><option value="fastest">Fastest</option><option value="shortest">Shortest</option><option value="fuel">Lowest fuel cost</option></select><span id="route-count" class="count-pill">—</span></div></div>
+        <div id="route-list" class="route-list"><div class="empty-state"><div class="empty-icon">⌁</div><strong>Your routes will appear here</strong><span>Enter a destination to compare your options.</span></div></div>
+        <div id="source-note" class="source-note">OSRM standard estimates · Live traffic is off until configured</div>
+      </aside>
+      <section class="map-panel"><div id="map"></div><div class="map-route-banner"><div class="banner-title"><span class="step-label">TRIP OVERVIEW</span><span id="map-status" class="map-status"><i class="map-badge-dot"></i> Hyderabad map ready</span></div><div class="banner-points"><span id="map-from">Your current location</span><b>→</b><span id="map-to">Choose a destination</span></div><div class="banner-stats"><span><b id="map-duration">--</b><small>EST. TIME</small></span><span><b id="map-distance">--</b><small>ROAD DISTANCE</small></span><span><b id="map-fuel">--</b><small id="map-fuel-label">BIKE FUEL</small></span></div></div><button id="recenter-btn" class="recenter-btn" title="Fit all routes">⊙</button><div class="map-legend"><span><i class="legend-line active-line"></i><span id="legend-primary-text">Selected route</span></span><span><i id="legend-alt-icon" class="legend-line alt-line"></i><span id="legend-alt-text">Other options</span></span></div></section>
+    </section>
+    <footer><span>RouteWise <span class="footer-dot">·</span> A smarter way to get there.</span><span>Built for the road ahead <span class="footer-star">✳</span></span></footer>
+  </main>
+  </div>
+  <aside id="advisor-widget" class="advisor-widget hidden" aria-label="RouteWise AI assistant">
+    <section id="advisor-panel" class="advisor-card advisor-panel hidden" aria-labelledby="advisor-title">
+      <div class="advisor-heading"><div><span class="step-label">ROUTEWISE AI</span><h2 id="advisor-title">Trip assistant</h2></div><button id="advisor-close" class="advisor-close" type="button" aria-label="Close trip assistant">×</button></div>
+      <p id="advisor-summary">Find routes and I’ll recommend the best fit for your trip.</p>
+      <div class="advisor-prompts" aria-label="Suggested questions"><button type="button" data-advisor-prompt="Which route is best?">Best route</button><button type="button" data-advisor-prompt="How can I save fuel?">Save fuel</button><button type="button" data-advisor-prompt="What should I check before leaving?">Before leaving</button></div>
+      <div id="advisor-chat" class="advisor-chat" aria-live="polite"></div>
+      <form id="advisor-form" class="advisor-form"><input id="advisor-input" type="text" placeholder="Ask about your trip" maxlength="160" autocomplete="off"><button type="submit" aria-label="Ask trip assistant">↑</button></form>
+      <small>Suggestions use RouteWise route estimates, not live traffic or road restrictions.</small>
+    </section>
+    <button id="advisor-toggle" class="advisor-toggle" type="button" aria-expanded="false" aria-controls="advisor-panel" aria-label="Open RouteWise AI trip assistant"><span>✦</span></button>
+  </aside>
+  <aside id="safety-widget" class="safety-widget hidden" aria-label="Rider safety">
+    <section id="safety-panel" class="safety-panel hidden" aria-labelledby="safety-title">
+      <div class="safety-heading"><div><span class="step-label">RIDER SAFETY</span><h2 id="safety-title">Need help?</h2></div><button id="safety-close" class="safety-close" type="button" aria-label="Close rider safety panel">×</button></div>
+      <p>If you feel unsafe or have an emergency, send a live GPS SOS by SMS to configured trusted contacts.</p>
+      <ul class="safety-rules"><li>Stop in a safe, visible place before using your phone.</li><li>Wear your helmet and follow traffic signals.</li><li>Share your route with a trusted contact for longer rides.</li></ul>
+      <button id="send-sos-btn" class="send-sos-btn" type="button">Send SOS SMS <span>!</span></button>
+      <small>This demo sends an in-app alert to the RouteWise admin dashboard. For immediate danger, call local emergency services.</small>
+    </section>
+    <button id="safety-toggle" class="safety-toggle" type="button" aria-expanded="false" aria-controls="safety-panel" aria-label="Open rider safety and SOS"><span>SOS</span></button>
+  </aside>
+  <section id="admin-dashboard" class="admin-dashboard hidden" role="dialog" aria-modal="true" aria-labelledby="admin-title"><div class="admin-panel"><div class="admin-heading"><div><span class="step-label">ROUTEWISE CONTROL</span><h2 id="admin-title">Admin safety dashboard</h2></div><button id="admin-dashboard-close" class="admin-dashboard-close" type="button" aria-label="Close admin dashboard">×</button></div><p class="admin-intro">SOS alerts from this browser session, including SMS delivery status.</p><div id="admin-alerts" class="admin-alerts"><div class="admin-empty"><b>No active SOS alerts</b><span>Emergency alerts will appear here immediately.</span></div></div></div></section>
+  <div id="pod-modal" class="pod-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pod-title"><form id="pod-form" class="pod-modal"><button id="pod-close" class="pod-close" type="button" aria-label="Close">×</button><span class="step-label">DELIVERY CONFIRMATION</span><h2 id="pod-title">Proof of delivery</h2><p id="pod-stop-name"></p><div id="delivery-otp-panel" class="delivery-otp-panel hidden"><label for="pod-customer-code">Customer SMS OTP</label><div class="otp-row"><input id="pod-customer-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code from customer"><button id="verify-delivery-otp" type="button" class="otp-send-btn">Verify code</button></div><small id="delivery-otp-status">Ask the customer for the code sent to their phone.</small></div><label for="pod-photo">Photo attachment (optional)</label><input id="pod-photo" type="file" accept="image/*"><small class="pod-hint">Choose a photo up to 4 MB, or provide a signature.</small><label for="signature-pad">Customer signature</label><canvas id="signature-pad" width="600" height="180" aria-label="Draw signature here"></canvas><button id="clear-signature" type="button" class="clear-signature">Clear signature</button><div class="pod-actions"><button id="pod-cancel" type="button" class="pod-cancel">Cancel</button><button class="primary-btn" type="submit"><span>Save proof &amp; complete</span><span>✓</span></button></div></form></div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="app.js"></script><script src="delivery.js"></script>
+</body></html>
